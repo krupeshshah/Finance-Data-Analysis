@@ -10,6 +10,10 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
+import matplotlib.pyplot as plt
+import plotly.figure_factory as ff
+import plotly.express as px
+import plotly.graph_objects as go
 
 #Token
 loggers =  getLogger()
@@ -179,7 +183,7 @@ def getTickerdetails(ticker_name):
             st.write(stock_details[1])
 
             # line chart for open
-            st.subheader(f'{stock_details[0]} stock price Open data')
+            st.subheader(f'{stock_details[0]} Open stock price data')
             df = pd.DataFrame({
             'date': stock_details[1]['date'],
             'open stock_price': stock_details[1]['open']
@@ -188,13 +192,52 @@ def getTickerdetails(ticker_name):
             st.line_chart(df)
 
             # line chart for close
-            st.subheader(f'{stock_details[0]} stock price Open data')
+            st.subheader(f'{stock_details[0]} Close stock price data')
             df = pd.DataFrame({
             'date': stock_details[1]['date'],
             'close stock_price': stock_details[1]['close']
             })
             df = df.rename(columns={'date':'index'}).set_index('index')
             st.line_chart(df)
+
+            # Multiple Line chart for high and low stock_price
+            st.subheader(f'{stock_details[0]} High and Low stock price data')
+            df = pd.DataFrame({
+            'date': stock_details[1]['date'],
+            'low stock_price': stock_details[1]['low'],
+            'high stock_price': stock_details[1]['high']
+            })
+            df = df.rename(columns={'date':'index'}).set_index('index')
+            chart_data = df
+            st.line_chart(chart_data)
+
+            # Histogram for no_of_transactions by month
+            x = stock_details[1]['no_of_trans']
+            fig = plt.figure(figsize=(10, 4))
+            plt.hist(x)
+            st.header("Histogram for no_of_transactions by month")
+            #st.balloons()
+            st.pyplot(fig)
+
+            #Bar Chart
+            st.header("Bar chart for no_of_transactions by month")
+            st.bar_chart(stock_details[1]['no_of_trans'])
+
+            #Pie chart year wise volume of stock sales
+            stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2020-01-01',todays_date)
+            x=stock_details[1]['date']
+            values = stock_details[1]['volume']
+            #The plot
+            fig = go.Figure(
+                go.Pie(
+                labels = x,
+                values = values,
+                hoverinfo = "label+percent",
+                textinfo = "value"
+            ))
+            st.header("Pie chart year wise volume of stock sales")
+            st.plotly_chart(fig)
+
         else:
             st.warning(f' {stock_details[0]}')
     else:
