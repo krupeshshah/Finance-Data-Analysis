@@ -11,8 +11,10 @@ import datetime as dt
 import requests
 import json
 
+#Token
 loggers =  getLogger()
 
+#Start of API Credentials
 ALPACA_API_KEY = 'tpHEpdlolUR703YTAdrvOHaUMW6PEDPw' #os.environ.get('ALPACA_API_KEY')
 # URL for all the tickers on Polygon
 # POLYGON_TICKERS_URL = 'https://api.polygon.io/v2/reference/tickers?page={}&apiKey={}'
@@ -25,7 +27,9 @@ POLYGON_DIV_URL = 'https://api.polygon.io/v2/reference/dividends/{}?apiKey={}'
 POLYGON_SPLIT_URL = 'https://api.polygon.io/v2/reference/splits/{}?apiKey={}'
 #URL FOR TICKER TYPES
 POLYGON_TYPES_URL = 'https://api.polygon.io/v2/reference/types?apiKey={}'
+#End of API Credentials
 
+#Start of Polygon API Code
 class polygon_api:
     '''Authorization: Bearer tpHEpdlolUR703YTAdrvOHaUMW6PEDPw
     'https://api.polygon.io/v2/aggs/ticker/AAPL/range/1/day/2020-06-01/2020-06-17?apiKey=tpHEpdlolUR703YTAdrvOHaUMW6PEDPw'
@@ -134,15 +138,16 @@ class polygon_api:
         '''this method is convert timestamp to data time formate''' 
         try:
             # logger.info(f'get_date : try block call {created}')
-            return dt.datetime.fromtimestamp((created/1000))
+            return dt.datetime.fromtimestamp((created/1000)).strftime('%Y-%m')
         except Exception as e:
             logger.info(f'get_date : exception block call { e} ')
+#End of Polygon API Code
 
-
+#Start of Ticker list defult data
 aggreget_api = polygon_api()
 
 # Get List of Ticker
-# ticker_list = aggreget_api.get_tickers()
+# ticker_list = aggreget_api.get_tickers()  #drirect api call for get ticker list
 ticker_list = pd.read_csv("data/tickers/tickerlist.csv")
 # Display List of Ticker
 st.subheader(f'Ticker List')
@@ -155,33 +160,49 @@ combine_ticker_name = ticker_dd['ticker'].str.cat(ticker_dd[['name']], sep='-')
 # get the index of AAPL ticker or default load
 default_ix = combine_ticker_name.tolist().index('AAPL-Apple Inc.')
 stock_details = []
-
 todays_date = dt.datetime.now().date() 
+#End of Ticker list defult data
 
+#Start of search
 def getTickerdetails(ticker_name):
     if(ticker_name):
         logger.info('getTickerdetails : if Condition BEFOR SPLIT called tikker Name {}'.format(ticker_name))
         ticker_value = ticker_name.split('-')
         ticker_name = ticker_value[0]
 
-        # getTickerdetails(ticker_value[0])
         logger.info('getTickerdetails : if Condition called tikker Name {}'.format(ticker_name))
-        stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'day','2021-01-01',todays_date)
+        stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'month','2021-01-01',todays_date)
 
         if len(stock_details[1]) > 0:
             # display the details of stock 
             st.subheader(f'{stock_details[0]} Stock Data')
             st.write(stock_details[1])
 
-            # line chart
-            st.subheader(f'{stock_details[0]}stock price Open data')
-            st.line_chart(stock_details[1].open)
+            # line chart for open
+            st.subheader(f'{stock_details[0]} stock price Open data')
+            df = pd.DataFrame({
+            'date': stock_details[1]['date'],
+            'open stock_price': stock_details[1]['open']
+            })
+            df = df.rename(columns={'date':'index'}).set_index('index')
+            st.line_chart(df)
+
+            # line chart for close
+            st.subheader(f'{stock_details[0]} stock price Open data')
+            df = pd.DataFrame({
+            'date': stock_details[1]['date'],
+            'close stock_price': stock_details[1]['close']
+            })
+            df = df.rename(columns={'date':'index'}).set_index('index')
+            st.line_chart(df)
         else:
             st.warning(f' {stock_details[0]}')
     else:
         logger.info('getTickerdetails : else Condition called tikker Name {}'.format(ticker_name))
         st.warning('Please Enter Tickker Name')
+#End of search
 
+#start of select box,text box, and search button design
 col1,col2,col3 = st.columns([1,1,1])
 with col1:
     # Create Select box
@@ -193,22 +214,5 @@ if ticker_txt_Name:
     ticker_name = ticker_txt_Name
 if st.button('Search'):
      getTickerdetails(ticker_name)
-# st.button('Submit',on_click=getTickerdetails(ticker_name),key='btn_ticker_submit')
-
-# # Check if Ticker name is selected or not
-# if ticker_name :
-#     # split ticker and name for get ticker
-#     ticker_value = ticker_name.split('-')
-
-#     getTickerdetails(ticker_value[0])
-    # Call the aggregate method for get the detail of stock 
-    # stock_details = aggreget_api.get_aggregate(ticker_value[0],1,'day','2021-01-01',todays_date)
-
-# # display the details of stock 
-# st.subheader(f'{stock_details[0]} Stock Data')
-# st.write(stock_details[1])
-
-# # line chart
-# st.subheader(f'{stock_details[0]}stock price Open data')
-# st.line_chart(stock_details[1].open)
+#end of select box,text box, and search button design
 
