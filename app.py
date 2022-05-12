@@ -1,5 +1,8 @@
 from asyncio.log import logger
+from asyncio.windows_events import NULL
 from linecache import getline
+from multiprocessing.sharedctypes import Value
+from optparse import Values
 from pkgutil import get_data
 from urllib.request import HTTPBasicAuthHandler
 import streamlit as st
@@ -50,7 +53,7 @@ class polygon_api:
             ticker_json = self.get_data(ticker_url)
             # print(ticker_json)
             ticker_df = pd.DataFrame(ticker_json['results'])
-            ticker_df.to_csv('data/tickers/tickerlist.csv', index=False)
+            # ticker_df.to_csv('data/tickers/tickerlist.csv', index=False)
             return ticker_df
         except Exception as e:
             logger.error(f'get ticker : exception block called {e}')
@@ -73,23 +76,32 @@ class polygon_api:
             
             logger.info('Get method call: try block method')
             response_json = self.get_data(method_url)
-            logger.info('Get method called: try block method')
+            logger.info(f'Get method called: try block method \n {response_json}')
             # aggreget_response_df = pd.DataFrame(response_json)
-            
-            # print(response_json)
-            stock_name = response_json['ticker']
-            stock_result = response_json['results']
+            if response_json['status']  != 'ERROR':
+                if response_json['queryCount'] > 0:
+                    logger.info('get_aggregate : If block Call')
+                    # print(response_json)
+                    stock_name = response_json['ticker']
+                    stock_result = response_json['results']
 
-            aggreget_response_df = pd.DataFrame(stock_result)
-            aggreget_response_df = aggreget_response_df.rename({'v':'volume','vw':'volume_weight','o':'open','c':'close','h':'high','l':'low','t':'date','n':'no_of_trans'}, axis=1)  # new method
-            # logger.info(f'convert to df :   {aggreget_response_df}')
-            # aggreget_response_df['t'] = pd.to_datetime(aggreget_response_df['t'], format='%Y%m%d')
-            aggreget_response_df.date = aggreget_response_df["date"].apply(self.get_date)
+                    aggreget_response_df = pd.DataFrame(stock_result)
+                    aggreget_response_df = aggreget_response_df.rename({'v':'volume','vw':'volume_weight','o':'open','c':'close','h':'high','l':'low','t':'date','n':'no_of_trans'}, axis=1)  # new method
+                    # logger.info(f'convert to df :   {aggreget_response_df}')
+                    # aggreget_response_df['t'] = pd.to_datetime(aggreget_response_df['t'], format='%Y%m%d')
+                    aggreget_response_df.date = aggreget_response_df["date"].apply(self.get_date)
 
-            aggreget_response_df.sort_values(by=['date'], inplace=True)
-            stock_details = (stock_name,aggreget_response_df)
-            aggreget_response_df.to_csv(f'data/stockdetails/{stock_name}.csv')
-            return stock_details
+                    aggreget_response_df.sort_values(by=['date'], inplace=True)
+                    stock_details = (stock_name,aggreget_response_df)
+                    # aggreget_response_df.to_csv(f'data/stockdetails/{stock_name}.csv')
+                    return stock_details
+                else:
+                    logger.info('get_aggregate : Else block Call')
+                    stock_details = (f'No Data Found For  {stocksTicker}',[])
+                    return stock_details
+            else:
+                stock_details = (f'No Data Found For  {stocksTicker}',[])
+                return stock_details
         except Exception as e:
             logger.error(f'get_aggregate : Except block Call {e}')
 
@@ -133,8 +145,8 @@ class polygon_api:
 aggreget_api = polygon_api()
 
 # Get List of Ticker
-ticker_list = aggreget_api.get_tickers()
-
+# ticker_list = aggreget_api.get_tickers()
+ticker_list = pd.read_csv("data/tickers/tickerlist.csv")
 # Display List of Ticker
 st.subheader(f'Ticker List')
 st.write(ticker_list)
@@ -145,24 +157,61 @@ ticker_dd = ticker_list[['name','ticker']]
 combine_ticker_name = ticker_dd['ticker'].str.cat(ticker_dd[['name']], sep='-')
 # get the index of AAPL ticker or default load
 default_ix = combine_ticker_name.tolist().index('AAPL-Apple Inc.')
-
-# Create Select box
-ticker_name = st.selectbox('Select Ticker',combine_ticker_name,index = default_ix)
 stock_details = []
 
-# Check if Ticker name is selected or not
-if ticker_name :
-    # split ticker and name for get ticker
-    ticker_value = ticker_name.split('-')
-    # ticker_value = ticker_dd.loc[ticker_dd['name'] == ticker_name,'ticker'].item()
+todays_date = dt.datetime.now().date() 
+
+def getTickerdetails(ticker_name):
+    if(ticker_name):
+        logger.info('getTickerdetails : if Condition BEFOR SPLIT called tikker Name {}'.format(ticker_name))
+        ticker_value = ticker_name.split('-')
+        ticker_name = ticker_value[0]
+
+        # getTickerdetails(ticker_value[0])
+        logger.info('getTickerdetails : if Condition called tikker Name {}'.format(ticker_name))
+        stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'day','2021-01-01',todays_date)
+
+        if len(stock_details[1]) > 0:
+            # display the details of stock 
+            st.subheader(f'{stock_details[0]} Stock Data')
+            st.write(stock_details[1])
+
+            # line chart
+            st.subheader(f'{stock_details[0]}stock price Open data')
+            st.line_chart(stock_details[1].open)
+        else:
+            st.warning(f' {stock_details[0]}')
+    else:
+        logger.info('getTickerdetails : else Condition called tikker Name {}'.format(ticker_name))
+        st.warning('Please Enter Tickker Name')
+
+col1,col2,col3 = st.columns([1,1,1])
+with col1:
+    # Create Select box
+    ticker_name = st.selectbox('Select Ticker :',combine_ticker_name,index = default_ix)
+with col2:
+    ticker_txt_Name = st.text_input('Enter Ticker:',key='txt_ticker_name')
+
+if ticker_txt_Name:
+    ticker_name = ticker_txt_Name
+if st.button('Search'):
+     getTickerdetails(ticker_name)
+# st.button('Submit',on_click=getTickerdetails(ticker_name),key='btn_ticker_submit')
+
+# # Check if Ticker name is selected or not
+# if ticker_name :
+#     # split ticker and name for get ticker
+#     ticker_value = ticker_name.split('-')
+
+#     getTickerdetails(ticker_value[0])
     # Call the aggregate method for get the detail of stock 
-    stock_details = aggreget_api.get_aggregate(ticker_value[0],1,'day','2021-01-01','2022-06-30')
+    # stock_details = aggreget_api.get_aggregate(ticker_value[0],1,'day','2021-01-01',todays_date)
 
-# display the details of stock 
-st.subheader(f'{stock_details[0]} Stock Data')
-st.write(stock_details[1])
+# # display the details of stock 
+# st.subheader(f'{stock_details[0]} Stock Data')
+# st.write(stock_details[1])
 
-# line chart
-st.subheader(f'{stock_details[0]}stock price Open data')
-st.line_chart(stock_details[1].open)
+# # line chart
+# st.subheader(f'{stock_details[0]}stock price Open data')
+# st.line_chart(stock_details[1].open)
 
