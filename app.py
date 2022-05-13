@@ -10,7 +10,7 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-import plotly.graph_objects as go
+from plotly import graph_objects as go
 
 #Token
 loggers =  getLogger()
