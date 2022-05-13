@@ -10,9 +10,6 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-import matplotlib.pyplot as plt
-import plotly.figure_factory as ff
-import plotly.express as px
 import plotly.graph_objects as go
 
 #Token
@@ -211,17 +208,15 @@ def getTickerdetails(ticker_name):
             chart_data = df
             st.line_chart(chart_data)
 
-            # Histogram for no_of_transactions by month
-            x = stock_details[1]['no_of_trans']
-            fig = plt.figure(figsize=(10, 4))
-            plt.hist(x)
-            st.header("Histogram for no_of_transactions by month")
-            #st.balloons()
-            st.pyplot(fig)
-
             #Bar Chart
             st.header("Bar chart for no_of_transactions by month")
-            st.bar_chart(stock_details[1]['no_of_trans'])
+            df = pd.DataFrame({
+            'date': stock_details[1]['date'],
+            'num of transactions': stock_details[1]['no_of_trans']
+            })
+            df = df.rename(columns={'date':'index'}).set_index('index')
+            chart_data = df
+            st.bar_chart(chart_data)
 
             #Pie chart year wise volume of stock sales
             stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2020-01-01',todays_date)
