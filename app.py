@@ -7,12 +7,13 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-from plotly import graph_objects as go
+import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
+
 #Token
 loggers =  getLogger()
-st.set_page_config(layout="wide")
+
 #Start of API Credentials
 ALPACA_API_KEY = 'tpHEpdlolUR703YTAdrvOHaUMW6PEDPw' #os.environ.get('ALPACA_API_KEY')
 # URL for all the tickers on Polygon
@@ -148,9 +149,11 @@ aggreget_api = polygon_api()
 # Get List of Ticker
 # ticker_list = aggreget_api.get_tickers()  #drirect api call for get ticker list
 ticker_list = pd.read_csv("data/tickers/tickerlist.csv")
+#Get useable data from csv
+df = ticker_list.iloc[:, 0:8]
 # Display List of Ticker
 st.subheader(f'Ticker List')
-st.write(ticker_list)
+st.write(df)
 
 # get list of ticker and name
 ticker_dd = ticker_list[['name','ticker']]
@@ -205,7 +208,7 @@ def getTickerdetails(ticker_name):
             df = df.rename(columns={'date':'index'}).set_index('index')
             chart_data = df
             st.line_chart(chart_data)
-
+            
             #Bar Chart
             st.header("Bar chart for no_of_transactions by month")
             df = pd.DataFrame({
@@ -216,20 +219,14 @@ def getTickerdetails(ticker_name):
             chart_data = df
             st.bar_chart(chart_data)
 
-            #Pie chart year wise volume of stock sales
-            stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2020-01-01',todays_date)
-            x=stock_details[1]['date']
-            values = stock_details[1]['volume']
-            #The plot
-            fig = go.Figure(
-                go.Pie(
-                labels = x,
-                values = values,
-                hoverinfo = "label+percent",
-                textinfo = "value"
-            ))
-            st.header("Pie chart year wise volume of stock sales")
-            st.plotly_chart(fig)
+            #Pie chart
+            stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2018-01-01',todays_date)
+            labels = stock_details[1]['date']
+            sizes = stock_details[1]['volume']
+            fig, ax = plt.subplots(figsize=(2,2))
+            ax.pie(sizes, labels=labels, autopct="%1.1f%%")
+            ax.axis("equal")
+            st.pyplot(fig)
 
         else:
             st.warning(f' {stock_details[0]}')
