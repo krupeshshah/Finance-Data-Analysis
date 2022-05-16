@@ -143,6 +143,15 @@ class polygon_api:
             logger.info(f'get_date : exception block call { e} ')
 #End of Polygon API Code
 
+title_col1,title_col2,title_col3 = st.columns([3,4,2])
+with title_col1:
+    # Create Select box
+    pass
+with title_col2:
+    st.title('Finance Data Analysis')
+with title_col3:
+    pass
+
 #Start of Ticker list defult data  
 aggreget_api = polygon_api()
 
