@@ -1,7 +1,4 @@
 from asyncio.log import logger
-from multiprocessing.sharedctypes import Value
-from optparse import Values
-from urllib.request import HTTPBasicAuthHandler
 import streamlit as st
 from logging import getLogger
 import numpy as np
@@ -10,12 +7,12 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-import plotly.graph_objects as go
+from plotly import graph_objects as go
 
 st.set_page_config(layout="wide")
 #Token
 loggers =  getLogger()
-
+st.set_page_config(layout="wide")
 #Start of API Credentials
 ALPACA_API_KEY = 'tpHEpdlolUR703YTAdrvOHaUMW6PEDPw' #os.environ.get('ALPACA_API_KEY')
 # URL for all the tickers on Polygon
