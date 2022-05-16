@@ -1,7 +1,4 @@
 from asyncio.log import logger
-from multiprocessing.sharedctypes import Value
-from optparse import Values
-from urllib.request import HTTPBasicAuthHandler
 import streamlit as st
 from logging import getLogger
 import numpy as np
@@ -10,7 +7,7 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-from plotly import graph_objects as go
+# from plotly import graph_objects as go
 
 #Token
 loggers =  getLogger()
@@ -219,19 +216,19 @@ def getTickerdetails(ticker_name):
             st.bar_chart(chart_data)
 
             #Pie chart year wise volume of stock sales
-            stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2020-01-01',todays_date)
-            x=stock_details[1]['date']
-            values = stock_details[1]['volume']
-            #The plot
-            fig = go.Figure(
-                go.Pie(
-                labels = x,
-                values = values,
-                hoverinfo = "label+percent",
-                textinfo = "value"
-            ))
-            st.header("Pie chart year wise volume of stock sales")
-            st.plotly_chart(fig)
+            # stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'year','2020-01-01',todays_date)
+            # x=stock_details[1]['date']
+            # values = stock_details[1]['volume']
+            # #The plot
+            # fig = go.Figure(
+            #     go.Pie(
+            #     labels = x,
+            #     values = values,
+            #     hoverinfo = "label+percent",
+            #     textinfo = "value"
+            # ))
+            # st.header("Pie chart year wise volume of stock sales")
+            # st.plotly_chart(fig)
 
         else:
             st.warning(f' {stock_details[0]}')
