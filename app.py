@@ -12,6 +12,7 @@ import requests
 import json
 import plotly.graph_objects as go
 
+st.set_page_config(layout="wide")
 #Token
 loggers =  getLogger()
 
@@ -144,7 +145,7 @@ class polygon_api:
             logger.info(f'get_date : exception block call { e} ')
 #End of Polygon API Code
 
-#Start of Ticker list defult data
+#Start of Ticker list defult data  
 aggreget_api = polygon_api()
 
 # Get List of Ticker
