@@ -5,7 +5,6 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
 
