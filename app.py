@@ -1,4 +1,3 @@
-from asyncio.log import logger
 import streamlit as st
 from logging import getLogger
 import numpy as np
@@ -6,7 +5,6 @@ import pandas as pd
 import datetime as dt
 import requests
 import json
-import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
 
