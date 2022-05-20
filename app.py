@@ -1,3 +1,4 @@
+from cv2 import compare
 import streamlit as st
 from logging import getLogger
 import numpy as np
@@ -6,10 +7,10 @@ import datetime as dt
 import requests
 import json
 
+# Sceen size
 st.set_page_config(layout="wide")
 
-default_load = True
-#Token
+# Create Logger
 loggers =  getLogger()
 
 #Start of API Credentials
@@ -34,7 +35,6 @@ class polygon_api:
     demo url = 'https://api.polygon.io/v2/aggs/ticker/AAPL/range/1/day/2021-07-22/2021-07-22?adjusted=true&sort=asc&limit=120&apiKey=tpHEpdlolUR703YTAdrvOHaUMW6PEDPw
     token is unique token for authorization 
     url is base url of the the api'''
-
 
     def __init__(self) :
         self.token = 'tpHEpdlolUR703YTAdrvOHaUMW6PEDPw'
@@ -68,7 +68,7 @@ class polygon_api:
             to_date : datetime as str : to date 
             Method: get
             request url : /v2/aggs/ticker/{stocksTicker}/range/{multiplier}/{timespan}/{from}/{to} 
-            Response : Data Frame of the particular stock'''    
+            Response : Data Frame of the particular stock '''    
         try:
             loggers.info('Start get_aggregate : try block method')
             method_url = (POLYGON_AGGS_URL.format(stocksTicker,multiplier,timespan,from_date,to_date)) # f'aggs/ticker/{stocksTicker}/range/{multiplier}/{timespan}/{from_date}/{to_date}'
@@ -147,6 +147,35 @@ def stock_details_fun(stock_details):
     st.subheader(f'{stock_details[0]} Stock Data')
     st.write(stock_details[1])
 
+    if stock_details[0].upper() == "APPL":
+        # line chart for open
+        st.subheader(f'{stock_details[0]} Open stock price data')
+        df = pd.DataFrame({
+        'date': stock_details[1]['date'],
+        'open stock_price': stock_details[1]['open']
+        })
+        df = df.rename(columns={'date':'index'}).set_index('index')
+        st.line_chart(df)
+    else :
+        loggers.info("test")
+        stock_details_AAPL_from_csv = pd.read_csv("data/stockdetails/AAPL.csv")
+        # loggers.info(stock_details_from_csv)
+        # stock_details = pd.DataFrame(stock_details_from_csv)
+
+        stock_details_def = ('APPL',stock_details_AAPL_from_csv)
+        # Multiple Line chart for high and low stock_price
+        st.subheader(f'{stock_details[0]} Comapare stock price data')
+        compare_stock = pd.DataFrame({
+        'date': stock_details[1]['date'],
+        'APPL Open stock_price': stock_details_def[1]['open'],
+        'Open stock_price': stock_details[1]['open']
+        })
+        loggers.info(compare_stock)
+        compare_stock = compare_stock.rename(columns={'date':'index'}).set_index('index')
+        # chart_data = compare_stock
+        st.line_chart(compare_stock)
+
+
     # line chart for open
     st.subheader(f'{stock_details[0]} Open stock price data')
     df = pd.DataFrame({
@@ -186,16 +215,6 @@ def stock_details_fun(stock_details):
     chart_data = df
     st.bar_chart(chart_data)
 
-    # #Pie chart
-    # stock_details = aggreget_api.get_aggregate(stock_details[0].upper(),1,'year','2018-01-01',todays_date)
-    # labels = stock_details[1]['date']
-    # sizes = stock_details[1]['volume']
-    # fig, ax = plt.subplots(figsize=(2,2))
-    # ax.pie(sizes, labels=labels, autopct="%1.1f%%")
-    # ax.axis("equal")
-    # st.pyplot(fig)
-
-
 title_col1,title_col2,title_col3 = st.columns([3,4,2])
 with title_col1:
     pass
@@ -228,14 +247,14 @@ stock_details = []
 todays_date = dt.datetime.now().date() 
 
 #Start of search
-def getTickerdetails(ticker_name):
+def getTickerdetails(ticker_name,from_date,to_date):
     if(ticker_name):
         loggers.info('getTickerdetails : if Condition BEFOR SPLIT called tikker Name {}'.format(ticker_name))
         ticker_value = ticker_name.split('-')
         ticker_name = ticker_value[0]
 
         loggers.info('getTickerdetails : if Condition called tikker Name {}'.format(ticker_name))
-        stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'month','2021-01-01',todays_date)
+        stock_details = aggreget_api.get_aggregate(ticker_name.upper(),1,'month',from_date,to_date)
 
         if len(stock_details[1]) > 0:
             stock_details_fun(stock_details)
@@ -247,6 +266,12 @@ def getTickerdetails(ticker_name):
         st.warning('Please Enter Tickker Name')
 #End of search
 
+# from_date = st.sidebar.date_input('From Date')
+# to_date = st.sidebar.date_input('To Date', max_value =todays_date)
+# to_date = st.sidebar.multiselect('TickerList',combine_ticker_name)
+
+
+
 #start of select box,text box, and search button design
 col1,col2,col3 = st.columns([1,1,1])
 with col1:
@@ -254,11 +279,22 @@ with col1:
     ticker_name = st.selectbox('Select Ticker :',combine_ticker_name,index = default_ix)
 with col2:
     ticker_txt_Name = st.text_input('Enter Ticker:',key='txt_ticker_name')
+# with col3:
+    # multiselect_ticker = st.multiselect('Multi Select Ticker ',combine_ticker_name)
+date_col1,date_col2,date_col3 = st.columns([1,1,1])
+
+with date_col1:
+    from_date = st.date_input('From Date')
+    
+with date_col2:
+    to_date = st.date_input('To Date', max_value =todays_date)
+loggers.info(from_date)
+loggers.info(to_date)
 
 if ticker_txt_Name:
     ticker_name = ticker_txt_Name
 if st.button('Search'):
-    getTickerdetails(ticker_name)
+    getTickerdetails(ticker_name,from_date,to_date)
     default_load = False
 else:
     stock_details_from_csv = pd.read_csv("data/stockdetails/AAPL.csv")
