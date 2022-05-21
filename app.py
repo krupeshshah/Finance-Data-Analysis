@@ -1,4 +1,3 @@
-from cv2 import compare
 import streamlit as st
 from logging import getLogger
 import numpy as np
